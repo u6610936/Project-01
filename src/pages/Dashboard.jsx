@@ -18,7 +18,7 @@ import { load } from "../utils/storage";
 
 const TX_KEY = "transactions";
 
-// palette (สีของกราฟ)
+// palette
 const COLORS = ["#4F8CFF", "#32E6FF", "#FF4FD8", "#A855F7", "#22C55E", "#F59E0B", "#FF4D6D"];
 
 function formatMoney(n) {
@@ -26,7 +26,7 @@ function formatMoney(n) {
 }
 
 function monthKey(dateStr) {
-  return dateStr.slice(0, 7); // "YYYY-MM-DD" -> "YYYY-MM"
+  return dateStr.slice(0, 7);
 }
 
 function getLatestDateISO(transactions) {
@@ -36,7 +36,7 @@ function getLatestDateISO(transactions) {
 }
 
 export default function Dashboard() {
-  const [period, setPeriod] = useState("daily"); // daily | weekly | monthly
+  const [period, setPeriod] = useState("daily"); 
   const [transactions, setTransactions] = useState(() => load(TX_KEY, []));
 
   function refresh() {
@@ -56,7 +56,7 @@ export default function Dashboard() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const totalAllTime = useMemo(() => {
@@ -66,7 +66,7 @@ export default function Dashboard() {
   const txCount = transactions.length;
 
   const salesByProduct = useMemo(() => {
-    const map = new Map(); // itemName -> { itemName, qty, sales }
+    const map = new Map(); 
     for (const t of transactions) {
       const name = t.itemName || "Unknown";
       const prev = map.get(name) || { itemName: name, qty: 0, sales: 0 };
@@ -98,7 +98,7 @@ export default function Dashboard() {
       return { label: `Monthly (${mk})`, sales };
     }
 
-    // weekly = last 7 days (from latest date)
+    
     const end = new Date(lastDate);
     const start = new Date(end);
     start.setDate(end.getDate() - 6);
@@ -119,7 +119,7 @@ export default function Dashboard() {
     if (!transactions.length) return [];
 
     if (period === "monthly") {
-      const map = new Map(); // "YYYY-MM" -> sales
+      const map = new Map(); 
       for (const t of transactions) {
         if (!t.date) continue;
         const k = monthKey(t.date);
@@ -130,7 +130,7 @@ export default function Dashboard() {
         .map(([k, v]) => ({ key: k, sales: v }));
     }
 
-    const map = new Map(); // "YYYY-MM-DD" -> sales
+    const map = new Map(); 
     for (const t of transactions) {
       if (!t.date) continue;
       map.set(t.date, (map.get(t.date) || 0) + Number(t.total || 0));
@@ -140,11 +140,11 @@ export default function Dashboard() {
       .map(([k, v]) => ({ key: k, sales: v }));
 
     if (period === "weekly") return arr.slice(-7);
-    return arr.slice(-14); // daily view: last 14 days
+    return arr.slice(-14); 
   }, [transactions, period]);
 
   const pieData = useMemo(() => {
-    const map = new Map(); // category -> sales
+    const map = new Map(); 
     for (const t of transactions) {
       const c = t.category || "Unknown";
       map.set(c, (map.get(c) || 0) + Number(t.total || 0));

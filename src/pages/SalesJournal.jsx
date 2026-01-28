@@ -13,6 +13,10 @@ function formatMoney(n) {
   return `฿${Number(n || 0).toLocaleString()}`;
 }
 
+function unique(arr) {
+  return Array.from(new Set(arr));
+}
+
 export default function SalesJournal() {
   const [transactions, setTransactions] = useState(() => load(TX_KEY, []));
   const [extraCategories, setExtraCategories] = useState(() => load(CAT_KEY, []));
@@ -27,25 +31,39 @@ export default function SalesJournal() {
   }, [selectedName]);
 
   const unitPrice = selectedProduct?.unitPrice ?? 0;
-  const category = selectedProduct?.category ?? "";
+  const productCategory = selectedProduct?.category ?? "";
   const total = unitPrice * Number(qty || 0);
+
+  const categoryOptions = useMemo(() => {
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    const fromExtra = extraCategories.filter(Boolean);
+    return unique([...fromProducts, ...fromExtra]).sort();
+  }, [extraCategories]);
+
+  const [selectedCategory, setSelectedCategory] = useState(
+    products[0]?.category ?? ""
+  );
+
+  const today = todayISO();
 
   const totalToday = useMemo(() => {
     return transactions
-      .filter((t) => t.date === todayISO())
+      .filter((t) => t.date === today)
       .reduce((sum, t) => sum + Number(t.total || 0), 0);
-  }, [transactions]);
+  }, [transactions, today]);
 
   function addTransaction(e) {
     e.preventDefault();
+
     if (!selectedProduct) return;
     if (!qty || Number(qty) <= 0) return;
     if (!date) return;
+    if (!selectedCategory) return;
 
     const newTx = {
       id: String(Date.now()),
       itemName: selectedProduct.itemName,
-      category: selectedProduct.category,
+      category: selectedCategory, 
       unitPrice: selectedProduct.unitPrice,
       quantity: Number(qty),
       date,
@@ -68,7 +86,9 @@ export default function SalesJournal() {
     const name = newCategory.trim();
     if (!name) return;
 
-    const exists = extraCategories.some((c) => c.toLowerCase() === name.toLowerCase());
+    const exists = extraCategories.some(
+      (c) => c.toLowerCase() === name.toLowerCase()
+    );
     if (exists) {
       setNewCategory("");
       return;
@@ -78,12 +98,18 @@ export default function SalesJournal() {
     setExtraCategories(next);
     save(CAT_KEY, next);
     setNewCategory("");
+
+    setSelectedCategory(name);
   }
 
   function deleteCategory(name) {
     const next = extraCategories.filter((c) => c !== name);
     setExtraCategories(next);
     save(CAT_KEY, next);
+
+    if (selectedCategory === name) {
+      setSelectedCategory(productCategory);
+    }
   }
 
   return (
@@ -95,10 +121,13 @@ export default function SalesJournal() {
             Add sales records and manage categories (saved locally in your browser)
           </p>
         </div>
+
         <div className="card" style={{ padding: 12, minWidth: 260 }}>
           <div className="card-title">Today’s Sales</div>
-          <div className="big-number" style={{ fontSize: 28 }}>{formatMoney(totalToday)}</div>
-          <div className="muted">{todayISO()}</div>
+          <div className="big-number" style={{ fontSize: 28 }}>
+            {formatMoney(totalToday)}
+          </div>
+          <div className="muted">{today}</div>
         </div>
       </div>
 
@@ -112,7 +141,16 @@ export default function SalesJournal() {
           <form onSubmit={addTransaction} className="form-grid">
             <div className="field">
               <label>Item</label>
-              <select value={selectedName} onChange={(e) => setSelectedName(e.target.value)}>
+              <select
+                value={selectedName}
+                onChange={(e) => {
+                  const nextName = e.target.value;
+                  setSelectedName(nextName);
+
+                  const nextProduct = products.find((p) => p.itemName === nextName);
+                  setSelectedCategory(nextProduct?.category ?? "");
+                }}
+              >
                 {products.map((p) => (
                   <option key={p.itemName} value={p.itemName}>
                     {p.itemName}
@@ -121,10 +159,33 @@ export default function SalesJournal() {
               </select>
             </div>
 
+            {/* Category dropdown */}
+            <div className="field">
+              <label>Category</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                {categoryOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <div className="muted" style={{ marginTop: 6 }}>
+                Default follows the selected item. You can change it.
+              </div>
+            </div>
+
             <div className="form-row">
               <div className="field">
                 <label>Quantity</label>
-                <input type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} />
+                <input
+                  type="number"
+                  min="1"
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value)}
+                />
               </div>
 
               <div className="field">
@@ -135,20 +196,24 @@ export default function SalesJournal() {
 
             <div className="grid-3" style={{ marginTop: 2 }}>
               <div className="card" style={{ padding: 12 }}>
-                <div className="card-title">Category</div>
-                <div style={{ fontWeight: 900 }}>{category || "-"}</div>
+                <div className="card-title">Selected Category</div>
+                <div style={{ fontWeight: 900 }}>{selectedCategory || "-"}</div>
               </div>
+
               <div className="card" style={{ padding: 12 }}>
                 <div className="card-title">Unit Price</div>
                 <div style={{ fontWeight: 900 }}>{formatMoney(unitPrice)}</div>
               </div>
+
               <div className="card" style={{ padding: 12 }}>
                 <div className="card-title">Total</div>
                 <div style={{ fontWeight: 900 }}>{formatMoney(total)}</div>
               </div>
             </div>
 
-            <button className="btn primary" type="submit">Add Transaction</button>
+            <button className="btn primary" type="submit">
+              Add Transaction
+            </button>
           </form>
         </div>
 
@@ -167,17 +232,25 @@ export default function SalesJournal() {
                 placeholder="e.g. drinks"
               />
             </div>
-            <button className="btn" type="submit">Add category</button>
+            <button className="btn" type="submit">
+              Add category
+            </button>
           </form>
 
           {extraCategories.length === 0 ? (
-            <p className="muted" style={{ marginTop: 10 }}>No extra categories yet.</p>
+            <p className="muted" style={{ marginTop: 10 }}>
+              No extra categories yet.
+            </p>
           ) : (
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
               {extraCategories.map((c) => (
                 <span key={c} className="badge">
                   {c}
-                  <button onClick={() => deleteCategory(c)} type="button" aria-label={`Delete ${c}`}>
+                  <button
+                    onClick={() => deleteCategory(c)}
+                    type="button"
+                    aria-label={`Delete ${c}`}
+                  >
                     ×
                   </button>
                 </span>
@@ -222,7 +295,11 @@ export default function SalesJournal() {
                     <td>{formatMoney(t.total)}</td>
                     <td>
                       <div className="table-actions">
-                        <button className="btn danger" onClick={() => removeTransaction(t.id)} type="button">
+                        <button
+                          className="btn danger"
+                          onClick={() => removeTransaction(t.id)}
+                          type="button"
+                        >
                           Delete
                         </button>
                       </div>

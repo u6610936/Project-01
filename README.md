@@ -1,16 +1,55 @@
-# React + Vite
+# Sales App – Basic POS System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a React JS web application developed as part of the CSX4107 course assignment.
 
-Currently, two official plugins are available:
+The application is a simple Point of Sale (POS) system that allows users to record sales transactions and view sales summaries.  
+All data is stored locally using the browser’s localStorage, with no backend involved.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Application Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Page 1: Dashboard
+- Display total sales of all time
+- Show sales summary by period (Daily / Weekly / Monthly)
+- Show sales by product
+- Show top 5 selling items
+- Visualizations:
+  - Line chart for sales trend
+  - Pie chart for sales proportion by category
 
-## Expanding the ESLint configuration
+### Page 2: Sales Journal
+- Record new sales by selecting product, quantity, and date
+- Automatically calculate total price
+- Display a table of all transactions
+- Data persistence using localStorage
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Screenshots
+
+### Dashboard Page
+![Dashboard](./public/dashboard.png)
+
+### Sales Journal Page
+![Sales Journal](./public/sales-journal.png)
+
+---
+
+## Technologies Used
+- React
+- Vite
+- JavaScript
+- CSS
+- localStorage
+
+---
+
+## Live Demo (GitHub Pages)
+https://u6610936.github.io/Project-01/
+
+---
+
+## Team Members
+- Thanakrit Kodklangdon 
+- Kitirat Pisithaporn 
